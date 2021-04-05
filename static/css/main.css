@@ -1,0 +1,5 @@
+#info_img {
+  width: 100%;
+  max-height: 33vh;
+  object-fit: scale-down !important;
+}

@@ -1,0 +1,74 @@
+<head>
+	<link rel="stylesheet" href="{{url_for('static',filename='css/bootstrap.css')}}" />
+	<script src="{{url_for('static',filename='js/jquery.min.js')}}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="{{url_for('static',filename='js/functions.js')}}"></script>
+	<script src="{{url_for('static',filename='js/bootstrap.bundle.min.js')}}"></script>
+</head>
+
+<body>
+  <header></header>
+
+  <div class="container-fluid wh-100 d-flex flex-column">
+    <div id="main-body" class="row">
+      <div class='mp-0 col-12 col-md-2 border-around'></div>
+      
+      <div class='mp-0 col-12 col-md-7'>
+        <table id='file_list' class="table table-striped table-hover table-bordered col-12">  
+          <thead id='properties' class='col-12'>
+            <tr class='col-12'>
+              <th class='col-sm'>
+                名稱
+              </th>
+              <th class='col-sm'>
+                標籤
+              </th>
+              <th class='col-sm'>
+                上傳者
+              </th>
+              <th class='col-sm'>
+                檔案大小
+              </th>
+            </tr>
+          </thead>
+          <tbody id='all_files'>
+            <tr v-for='file in dirs'>
+              <td>
+                {[ file.name ]}
+              </td>
+              <td>
+                {[ file.tag ]}
+              </td>
+              <td>
+                {[ file.uploader ]}
+              </td>
+              <td>
+                {[ file.size ]}
+              </td>
+            </tr>
+            <tr v-for='file in files'>
+              <td>
+                {[ file.name ]}
+              </td>
+              <td>
+                {[ file.tag ]}
+              </td>
+              <td>
+                {[ file.uploader ]}
+              </td>
+              <td>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class='mp-0 col-12 col-md-3'></div>
+    </div>
+  </div>
+  <script>
+    path = window.location.href.split('file/')[1]
+    initialize()
+    get_info(path)
+  </script>
+</body>

@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!--bootstrap-->
+    <link rel="stylesheet" href="{{url_for('static',filename='css/bootstrap.css')}}" />
+    <link rel="stylesheet" href="{{url_for('static',filename='css/bootstrap-icons.css')}}" />
+    <script src="{{url_for('static',filename='js/bootstrap.bundle.min.js')}}"></script>
+    
+    <!--jquery-->
+    <script src="{{url_for('static',filename='js/jquery.js')}}"></script>
+
+    <!--vue-->
+    <script src="{{url_for('static',filename='js/vue.js')}}"></script>
+
+    <!--font awesome-->
+    <link rel="stylesheet" href="{{url_for('static',filename='css/all.min.css')}}" />
+    
+    <!--custom scrollbar-->
+    <link rel="stylesheet" href="{{url_for('static',filename='css/scrollbar.css')}}" />
+    
+    <!--custom draggable bar-->
+    <link rel="stylesheet" href="{{url_for('static',filename='css/draggable-bar.css')}}" />
+    <script src="{{url_for('static',filename='js/draggable_bar.js')}}"></script>
+    
+    <!--custom player-->
+    <link rel="stylesheet" href="{{url_for('static',filename='css/player.css')}}" />
+    <script src="{{url_for('static',filename='js/player.js')}}"></script>
+    
+    <!--this page-->
+    <script src="{{url_for('static',filename='js/media.js')}}"></script>
+
+    <style>
+      .selected {
+          background-color:#CCCCCC !important;
+      }
+    </style>
+  </head>
+
+  <body style='background-color:#111'>
+    <div class="postion-fixed w-100 h-100 d-flex flex-column m-0 p-0" style="overflow:hidden !important;">
+      <!--頂部navbar-->
+      <header class="m-0 pt-1 pb-1 pl-0 pr-0 navbar navbar-expand-lg navbar-dark bg-dark d-flex justify-content-between">
+        <!--左上icon區-->
+        <div class="align-items-center">
+          <span class="m-2 navbar-brand">AoiDrive</span>
+        </div>
+
+        <!--右上操作區-->
+        <div class="align-items-center">
+          <div class='m-0 p-0 col-12 col-md-2 h-100 max-h-inherit d-flex'>
+            <div class="dropstart">
+              <button class="m-0 btn btn-outline-dark text-light dropdown-toggle" data-bs-toggle="dropdown">
+              </button>
+            
+              <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton1">
+                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadModal">上傳檔案</a></li>
+                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#createDirModal">新增資料夾</a></li>
+              </ul>
+            </div>
+        </div>
+      </header>
+
+      <!--主介面區-->
+      <div class="container-fluid position-relative flex-grow-1 w-100 h-100 m-0 p-0">
+        <div id="main-body" class="position-absolute max-h-inherit w-100 h-100 row m-0 p-0 pt-1 pb-1">
+          <div class='col-md-1'></div>
+          <!--左側撥放器-->
+          <div id='content' class='m-0 p-0 pt-2 col-12 col-md-7 max-h-inherit h-100 position-relative'>
+            <!-- 影片撥放器 -->
+            <div id="player"></div>
+          </div>
+          
+          <!--右側檔案列表-->
+          <div class='d-flex flex-column m-0 p-0 ps-3 col-md-4 max-h-inherit h-100'>
+            <!--檔案區-->
+            <div class="m-0 p-0 pe-3 position-relative flex-grow-1 scrollbar-blue-ice" style="overflow:auto !important;">
+              <!--檔案列表(使用table)-->
+              <table id='file_list' class="m-0 p-0 table text-light" style="font-size: 16px;">
+                <tbody id='all_files' class='col-12 m-0 p-0'>
+                  <!--檔案-->
+                  <tr v-for='file in files' @click="click(file)" v-bind:id="'file_'+file.id">
+                    <!--名稱-->
+                    <td class='col-md-7' style='word-break: break-word !important;'>
+                      {[ file.name ]}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--狀態初始化-->
+    <script>
+      initialize()
+    </script>
+  </body>
+</html>

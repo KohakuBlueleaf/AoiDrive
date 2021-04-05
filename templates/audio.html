@@ -1,0 +1,57 @@
+<head>
+	<link rel="stylesheet" href="{{url_for('static',filename='css/bootstrap.css')}}" />
+	<link rel="stylesheet" href="{{url_for('static',filename='css/bootstrap-icons.css')}}" />
+	<link rel="stylesheet" href="{{url_for('static',filename='css/all.min.css')}}" />
+	<link rel="stylesheet" href="{{url_for('static',filename='css/draggable-bar.css')}}" />
+	<link rel="stylesheet" href="{{url_for('static',filename='css/video.css')}}" />
+
+	<script src="{{url_for('static',filename='js/jquery.js')}}"></script>
+  <script src="{{url_for('static',filename='js/vue.js')}}"></script>
+	<script src="{{url_for('static',filename='js/bootstrap.bundle.min.js')}}"></script>
+	<script src="{{url_for('static',filename='js/draggable_bar.js')}}"></script>
+	<script src="{{url_for('static',filename='js/audio.js')}}"></script>
+</head>
+
+<body style="background-color:#000">
+  <div class="postion-fixed w-100 d-flex flex-column m-0 p-0">
+    <div class="container-fluid position-relative w-100 m-0 p-0">
+      <div id="main-body" class="position-absolute w-100 h-100 row m-0 p-0">
+
+        <!-- 音樂撥放器 -->
+        <div id='player' class="d-flex flex-column max-w-inherit w-100 m-0 p-0 pt-2" style="background-color: #000;">
+          <audio id='audio' preload='auto' ontimeupdate="on_playing(event)" style="display:none;">
+            <source src="/get_media/{{ hash }}">
+          </audio>
+
+          <div id='control-panel' class="d-flex flex-column m-0 p-0 position-absolute max-w-inherit w-100" style="z-index:101;">
+            
+            <div id='bar'></div>
+
+            <div id='control' class="d-flex flex-row max-w-inherit w-100 text-light align-items-center justify-content-between" style="z-index:101;">
+              <div class="d-flex flex-row align-items-center">
+                <button class='m-2' onclick='change_state()' style="background-color: transparent; border: 0px;">
+                  <i v-bind:class="'text-light ' + button_state"></i>
+                </button>
+                <span class='ms-1 me-1'> {[ time|format_time ]}/{[ total|format_time ]} </span>
+                <div class="m-1 d-flex flex-row align-items-center">
+                  <button class="text-light" style="background-color: transparent; border: 0px;" onclick='change_mute()'>
+                    <i v-bind:class="volume_state" style="min-width:18px;max-width:18px"></i>
+                  </button>
+                  <div class='flex-grow-1 ms-1 border-round' style="width:100px;">
+                    <div id='vol-bar'></div>
+                  </div>
+                </div>
+              </div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+
+      
+      </div>
+    </div>
+  </div>
+  <script>
+    initialize()
+  </script>s
+</body>
