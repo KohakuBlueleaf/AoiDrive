@@ -124,6 +124,7 @@ function initialize(){
       now_field: '',
       method:[],
       back_state:'display:none',
+      video_file_state:'display:none'
     },
     methods:{
       //下載
@@ -260,6 +261,19 @@ function get_info(path){
       files = response['files']
       dirs = response['dirs']
 
+      var has_video = false;
+      for(var i in files){
+        if(files[i].type.split('/')[0]=='video'){
+          has_video = true
+          break;
+        }
+      }
+      if(has_video){
+        op_obj.video_file_state = '';
+      }else{
+        op_obj.video_file_state = 'display:none';
+      }
+
       files_obj.files= files;
       files_obj.dirs = dirs;
       window.history.pushState(null,null,path);
@@ -321,9 +335,13 @@ function traverseFileTree(item, path, all_file, all_file_name, path_stat, all_di
     // Get file
     item.file(function(file) {
       var name = file.name
-      all_file_name.push(name)
-      all_file[name] = file
-      path_stat[name] = path
+      all_file_name.push(path+name)
+      all_file[path+name] = file
+      if(path in path_stat){
+        path_stat[path].push(name)
+      }else{
+        path_stat[path] = [name]
+      }
     });
   } else if (item.isDirectory) {
     // Get folder contents
@@ -363,6 +381,9 @@ function traverseFileTree(item, path, all_file, all_file_name, path_stat, all_di
 function drop(event){
   //取消預設事件
   event.preventDefault();
+
+  var has_file = false;
+
   //獲取各種資料
   var length = event.dataTransfer.items.length
   var items = event.dataTransfer.items
@@ -380,6 +401,7 @@ function drop(event){
     if(item.webkitGetAsEntry().isFile){
       file = item.getAsFile()
       file_form.append(file.name, file)
+      has_file = true
     //如果物件是資料夾 掃描資料夾後上傳
     //因為多個資料夾會導致掃描跟上傳產生衝突
     //因此只要遇到資料夾就是上傳該資料夾後退出
@@ -413,7 +435,9 @@ function drop(event){
       return
     }
   }
-  upload_form(file_form)
+  if (has_file){
+    upload_form(file_form)
+  }
 }
 function dragover(event){
   event.preventDefault();
@@ -516,6 +540,32 @@ function create_dir(){
     },error: function(data) {
       alert('伺服器出現錯誤，請聯絡管理員');
       $('#createDirModal').modal('hide');
+    }
+  });
+};
+//建立資料夾
+function set_property(){
+  form = document.getElementById("set_property");
+  var formData = new FormData(form);
+  formData.append('hash',info_obj.file.hash);
+
+  for(var pair of formData.entries()) {
+    key = pair[0]; value = pair[1];
+    console.log(key,value)
+  }
+  $.ajax({
+    url:'/set_property',
+    type : "POST",
+    data : formData,
+    contentType: false,
+    cache: false,
+    processData: false,
+    success : function(data) {
+      get_info('/'+field+'/'+now_hash)
+      $('#setPropertyModal').modal('hide');
+    },error: function(data) {
+      alert('伺服器出現錯誤，請聯絡管理員');
+      $('#setPropertyModal').modal('hide');
     }
   });
 };

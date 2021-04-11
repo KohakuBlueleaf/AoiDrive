@@ -2,7 +2,7 @@
   {
     "database_option": {
       "name": "users",
-      "path": "C:\\code\\AoiDrive/database/database/database.aoi2"
+      "path": "database/database.aoi2"
     },
     "IP": "127.0.0.1",
     "Port": 38738,

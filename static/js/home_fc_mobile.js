@@ -23,7 +23,7 @@ let files_obj;
 let op_obj;
 //上傳檔案modal物件
 let upload_modal_obj;
-let player;6
+let player;
 
 //本頁屬性
 //本頁的區域(public 或 personal)
@@ -64,30 +64,37 @@ function initialize(){
           return
         }
         info_obj = items
-
-        type = items.type.split('/')[0]
-        document.getElementById('vid-container').setAttribute('style', 'display:none !important')
-        document.getElementById('info_aud').setAttribute('style', 'background-color:#000;display:none !important')
         //document.getElementById('info_img').style.display='none !important'
         
-        //判斷不同檔案類型的處理方式
-        if(type=='image'){
-          $('#info_img').prop("src", "/thumbnail/"+items.id.toString())
-          $('#info_img').prop("style", "")
-        }else if(type=='video'){
-          player.source = "/get_media/"+items.hash
-          $('#vid-container').css({'display':''})
-        }else if(type=='audio'){
-          $('#info_aud').prop("src", "/audio/"+items.hash)
-          $('#info_aud').css({
-            'display':''
-          })
-          document.getElementById('audio').src = '/get_media/'+info_obj.hash
-          document.getElementById('audio').load()
-        }
         //設定被選擇的物件
         $('.selected').removeClass('selected');
         $('#file_'+items.id.toString()).addClass('selected');
+      },
+      play: function(items){
+        if(items.type.split('/')[0]=='video'){
+          console.log(items)
+          $('#preview_video_modal').modal('show')
+          $('#video-preview-file-name').text(items.name)
+          player.source = '/get_media/'+items.hash
+        }
+      },
+      set: function(item){
+        info_obj = item
+        $('.selected').removeClass('selected');
+        $('#file_'+item.id.toString()).addClass('selected');
+        $('#setPropertyModal').modal('show')
+      },
+      del: function(item){
+        info_obj = item
+        $('.selected').removeClass('selected');
+        $('#file_'+item.id.toString()).addClass('selected');
+        op_obj.del()
+      },
+      load: function(item){
+        info_obj = item
+        $('.selected').removeClass('selected');
+        $('#file_'+item.id.toString()).addClass('selected');
+        op_obj.load()
       }
     }
   });
@@ -106,6 +113,7 @@ function initialize(){
       now_field: '',
       method:[],
       back_state:'display:none',
+      video_file_state:'display:none',
     },
     methods:{
       //下載
@@ -165,9 +173,24 @@ function initialize(){
     }
   });
 
-  player = new AoiPlayer('vid_player')
-  player.max_height = '33vh'
+  player = new AoiMobilePlayer('vid_player',false)
+  player.max_height = '50vh'
+  
+  $('#preview_video_modal').on(
+    'hidden.bs.modal', function(event){
+      player.video.pause()
+    }
+  )
 };
+
+/*
+檔案預覽
+*/
+function download_video_preview(){
+  link = document.createElement('a')
+  link.href = '/download/'+player.source.split('/get_media/')[1]
+  link.click()
+}
 
 /*
 資料獲取
@@ -242,6 +265,19 @@ function get_info(path){
       files = response['files']
       dirs = response['dirs']
 
+      var has_video = false;
+      for(var i in files){
+        if(files[i].type.split('/')[0]=='video'){
+          has_video = true
+          break;
+        }
+      }
+      if(has_video){
+        op_obj.video_file_state = '';
+      }else{
+        op_obj.video_file_state = 'display:none';
+      }
+
       files_obj.files= files;
       files_obj.dirs = dirs;
       window.history.pushState(null,null,path);
@@ -250,6 +286,7 @@ function get_info(path){
     }
 	});
 };
+
 //回到父目錄
 function back_to_parent(){
   //獲取父目錄的目錄
@@ -286,121 +323,6 @@ function back_to_parent(){
 /* 
 檔案操作
 */
-let up_stat = {
-  uploading: false, 
-  scanning: false,
-  last_scan: 0
-}
-//從拖曳的物件中獲取檔案/路徑
-//基本是從stack overflow抄來的
-//簡單的dfs
-function traverseFileTree(item, path, all_file, all_file_name, path_stat, all_dir) {
-  var d = new Date()
-  up_stat.scanning = true
-
-  path = path || "";
-  if (item.isFile) {
-    // Get file
-    item.file(function(file) {
-      var name = file.name
-      all_file_name.push(name)
-      all_file[name] = file
-      path_stat[name] = path
-    });
-  } else if (item.isDirectory) {
-    // Get folder contents
-    if(path in all_dir){
-      all_dir[path].push(item.name)
-    }else{
-      all_dir[path] = [item.name]
-    }
-    //console.log(item.name)
-    var dirReader = item.createReader();
-
-    var load = setInterval(function(){
-      dirReader.readEntries(function(entries) {
-        //console.log(entries.length)
-        if(entries.length==0){
-          clearInterval(load);
-        }
-        for (var i=0; i<entries.length; i++) {
-          traverseFileTree(entries[i], path + item.name + "/", all_file, all_file_name, path_stat, all_dir);
-        }
-      })
-    },50);
-  }
-  //設定一個timeout
-  //用來檢查是否全部路徑都掃描完畢
-  up_stat.last_scan = d.getTime()
-  var now_time = d.getTime()
-  setTimeout(
-    function(){
-      if(d.getTime()-up_stat.last_scan==0){
-        up_stat.scanning = false
-      }
-    },200
-  )
-}
-//放開拖曳物件
-function drop(event){
-  //取消預設事件
-  event.preventDefault();
-  //獲取各種資料
-  var length = event.dataTransfer.items.length
-  var items = event.dataTransfer.items
-
-  //建立新表單
-  var file_form = new FormData()
-  file_form.append('root',now_info.path);
-  file_form.append('des','')
-  file_form.append('tag','')
-  
-  //掃描所有物件
-  for(var i=0 ;i<length; i++){
-    item = items[i]
-    //如果物件是檔案 加進file_form
-    if(item.webkitGetAsEntry().isFile){
-      file = item.getAsFile()
-      file_form.append(file.name, file)
-    //如果物件是資料夾 掃描資料夾後上傳
-    //因為多個資料夾會導致掃描跟上傳產生衝突
-    //因此只要遇到資料夾就是上傳該資料夾後退出
-    }else{
-      folder = item.webkitGetAsEntry()
-      //要丟進dfs的物件
-      var all_file = {}
-      var all_file_name = []
-      var all_dir = {}
-      var path_stat = {}
-      //dfs
-      traverseFileTree(folder,now_info.path+'/',all_file,all_file_name,path_stat,all_dir)
-      
-      //確認掃描完全之後上傳
-      upload = setInterval(
-        function(){
-          if(up_stat.scanning != true){
-            form = new FormData()
-            form.append('root_list',JSON.stringify(path_stat))
-            form.append('dirs', JSON.stringify(all_dir))
-            
-            for(var i in all_file_name){
-              item = all_file_name[i]
-              form.append(item, all_file[item])
-            }
-            upload_form(form)
-            clearInterval(upload)
-          }
-        },200
-      )
-      return
-    }
-  }
-  upload_form(file_form)
-}
-function dragover(event){
-  event.preventDefault();
-}
-
 //上傳檔案(經由modal)
 function upload(data){
   form = document.getElementById("upload_file");
@@ -417,7 +339,7 @@ function upload(data){
     }
   }
   formData.append('root',now_info.path);
-  upload_form(formData)
+  //upload_form(formData)
 };
 
 //上傳form資料
@@ -498,6 +420,33 @@ function create_dir(){
     },error: function(data) {
       alert('伺服器出現錯誤，請聯絡管理員');
       $('#createDirModal').modal('hide');
+    }
+  });
+};
+
+//建立資料夾
+function set_property(){
+  form = document.getElementById("set_property");
+  var formData = new FormData(form);
+  formData.append('hash',info_obj.file.hash);
+
+  for(var pair of formData.entries()) {
+    key = pair[0]; value = pair[1];
+    console.log(key,value)
+  }
+  $.ajax({
+    url:'/set_property',
+    type : "POST",
+    data : formData,
+    contentType: false,
+    cache: false,
+    processData: false,
+    success : function(data) {
+      get_info('/'+field+'/'+now_hash)
+      $('#setPropertyModal').modal('hide');
+    },error: function(data) {
+      alert('伺服器出現錯誤，請聯絡管理員');
+      $('#setPropertyModal').modal('hide');
     }
   });
 };

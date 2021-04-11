@@ -77,7 +77,8 @@
                 </div>
                 <!--區域切換按鈕(同時顯示當前目錄)-->
                 <div class="dropdown">
-                  <button class="m-0 btn btn-light" data-bs-toggle="dropdown">
+                  <!--button class="m-0 btn btn-light" data-bs-toggle="dropdown"-->
+                  <button class="m-0 btn btn-light">
                     {[ now_field ]}
                   </button>
                 
@@ -98,7 +99,9 @@
                   <i class="fas fa-ellipsis-v me-2" data-bs-toggle="dropdown" style="font-size: 22px !important;cursor:pointer"></i>
                 
                   <ul class="dropdown-menu dropdown-menu-left">
-                    <li><a class="dropdown-item" v-bind:href="'/media/'+now_hash">在媒體瀏覽器中開啟此資料夾</a>
+                    <li style="display:none"><a class="dropdown-item" v-bind:href="'/media/'+now_hash" v-bind:style="video_file_state">在媒體瀏覽器中開啟此資料夾</a></li>
+                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadModal">上傳檔案</a></li>
+                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#createDirModal">新增資料夾</a></li>
                   </ul>
                 </div>
               </div>
@@ -137,7 +140,8 @@
                             <i class="fas fa-ellipsis-v me-2" data-bs-toggle="dropdown" style="font-size: 22px !important;cursor:pointer"></i>
                           
                             <ul class="dropdown-menu dropdown-menu-left">
-                              <li><a class="dropdown-item">在媒體瀏覽器中開啟此資料夾</a>
+                              <li><a class="dropdown-item" @click="set(file)">更改屬性</a>
+                              <li><a class="dropdown-item" @click="del(file)">刪除</a>
                             </ul>
                           </div>
                         </td>
@@ -149,13 +153,15 @@
                           <div>
                             <i v-bind:class="icons[file.type.split('/')[0]]"></i>
                             {[ file.name ]}
-                            </div>
+                          </div>
                           <div class="dropstart">
-                            <i class="fas fa-ellipsis-v me-2" data-bs-toggle="dropdown" style="font-size: 22px !important;cursor:pointer"></i>
+                            <i class="fas fa-ellipsis-v me-2" data-bs-toggle="dropdown" style="font-size: 22px !important;cursor:pointer" @click="click(file)"></i>
                           
                             <ul class="dropdown-menu dropdown-menu-left">
-                              <li><a class="dropdown-item">下載</a>
-                              <li><a class="dropdown-item">刪除</a>
+                              <li><a class="dropdown-item" @click="set(file)">更改屬性</a>
+                              <li><a class="dropdown-item" @click="load(file)">下載</a>
+                              <li><a class="dropdown-item" @click="del(file)">刪除</a>
+                              <li><a class="dropdown-item" @click="play(file)">預覽檔案</a></li>
                             </ul>
                           </div>
                         </td>
@@ -173,10 +179,7 @@
               <div id="info_icon" class="max-h-inherit m-0 p-0 h-33">
                 <!--預覽圖片-->
                 <img id='info_img' class='max-h-inherit mx-auto d-block m-0 p-0 h-100' style="display:none !important;">
-                <!--影片撥放器(player.js/player.css)-->
-                <div id='vid-container' class="m-0 p-0" style="display:none;">
-                  <div id='vid_player'></div>
-                </div>
+                
                 <!--音樂撥放器(Modified from video.html/audio.js/video.css)-->
                 <div id='info_aud' class='d-flex flex-column' style="background-color: #000;display:none !important;">
                   <div id='player' class="d-flex flex-column flex-grow-1 max-w-inherit w-100 m-0 p-0 pt-2">
@@ -221,6 +224,66 @@
     </div>
 
     <!-- Modal -->
+    <!--影片撥放器(player.js/player.css)-->
+    <div class="modal fade" id="preview_video_modal" tabindex="-1" aria-hidden="false">
+      <div class="modal-dialog p-0">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span id='video-preview-file-name'></span>
+          </div>
+          <div class="modal-content">
+            <div class="modal-body p-1">
+              <div id='vid-container' class="m-0 p-0 player">
+                <div id='vid_player'>
+                  <div class="video-container-outer">
+                    <div class="video-container-inter">
+                      <video name="video" class="video" preload="auto"></video>
+                    </div>
+                  </div>
+                  <div id="_control" name="control-panel" class="control-panel">
+                    <div id="_bar">
+                      <div class="drag-container">
+                        <div class="draggable" name="draggable">
+                          <div name="draggable-handle" style="left:0%" class="draggable-handle">
+                            <div class="draggable-handle-inner"></div>
+                          </div>
+                          <div name="progress-bar" class="progress-bar" style="width:0%"></div>
+                          <div name="draggable-bar" class="draggable-bar" style="width:0%"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div name="control" class="control-button-group">
+                      <div class="control-left">
+                        <button name="pause" class="pause-button">
+                          <i class="text-light fas fa-play"></i>
+                        </button>
+                        <span name="time" class="time"></span>
+                        <div class="volume">
+                          <button name="volume" class="mute">
+                            <i class="text-light fas fa-volume-up"  style="min-width:18px;max-width:18px"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <button name="screen" style="background-color: transparent; border:0px;">
+                          <i class="text-light fas fa-expand"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!--底部按鈕-->
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="quit_video_preview()">離開</button>
+            <button type="button" class="btn btn-primary" onclick="download_video_preview()">下載</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 上傳檔案 -->
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="false">
       <div class="modal-dialog p-0">
@@ -298,6 +361,38 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
             <button type="button" class="btn btn-primary" onclick="create_dir()">建立</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 更改屬性 -->
+    <div class="modal fade" id="setPropertyModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">更改屬性</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id='set_property'>
+              <div class='form-group mb-3'>
+                <label for="tag">名稱</label>
+                <input type="text" name="name" class="form-control" autocomplete="off">
+              </div>
+              <div class='form-group mb-3'>
+                <label for="tag">標籤(不同標籤用/隔開)</label>
+                <input type="text" name="tag" class="form-control" autocomplete="off">
+              </div>
+              <div class='form-group'>
+                <label for="des">描述</label>
+                <textarea type="text" name="des" class="form-control" autocomplete="off"></textarea> 
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" onclick="set_property()">修改</button>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import os
 import shutil
+from types import prepare_class
 from aoidb.database import AoiDB2 as AoiDB
 from pathtree import PathTree
 from _sha3 import shake_256 as sha
@@ -195,7 +196,22 @@ class AoiFile:
     return properties
   
   def set_properties(self, id, properties):
-    properties['his'] = self.__db.get(id=id)['his']+f'[{ctime()}] change properties.'
+    data = self.__db.get(id=id)
+
+    if 'name' in properties:
+      new_name = properties['name']
+      path = f'{data["path"]}/{new_name}'
+      
+      if new_name.find('.')==-1 and data["name"].count('.'):
+        sub = data["name"].split('.')[-1]
+        path = f'{data["path"]}/{new_name}.{sub}'
+        properties["name"] = f'{new_name}.{sub}'
+      
+      shutil.move(f'{data["path"]}/{data["name"]}',path)
+    if 'path' in properties:
+      del properties['path']
+
+    properties['his'] = data['his']+f'\n[{ctime()}] change properties.'
     self.__db.change_value(id, **properties)
     self.save_db()
     return 'success'

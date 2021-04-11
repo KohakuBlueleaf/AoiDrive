@@ -14,6 +14,7 @@ from json import dump,load,loads
 
 from filesystem.fileclient import FileClient
 from aoidb.client import DataBaseClient
+from utils import *
 
 '''
 utils
@@ -22,36 +23,6 @@ encode = lambda x: bytes(x,encoding='utf-8')
 decode = lambda x: bytes.decode(x)
 str_to_sha = lambda x: shake_256(encode(x)).hexdigest(10)
 
-def log_error(err, ignore_file_name=['discord\ext\commands']):
-  all_mes = re.findall(r'File.*\n\s+.*',err)
-  err_class, err_message = re.findall(r'.+: .+',err)[0].split(": ")
-
-  output = '========Error Occured========\n'
-  before_file = ''
-
-  for i in all_mes:
-    state, program = i.split('\n')
-    err_file, err_line, err_pos = state.split(', ')
-
-    for i in ignore_file_name:
-      if err_file.find(i)!=-1:
-        break
-    else:
-      if before_file:
-        output += '-----------------------------\n'
-      if err_file!=before_file:
-        output += f'Error File   : {err_file[5:]}\n'
-        before_file = err_file
-      
-      output += f'Error Line   : {err_line[5:]}\n'
-      output += f'Error Pos    : {err_pos[3:]}\n'
-      output += f'Error program: {program.strip()}\n'
-  
-  output += '=============================\n'
-  output += f'Error Class  : {err_class}\n'
-  output += f'Error Message: {err_message}\n'
-  output += '============================='
-  print(output)
 '''
 設定參數
 '''
@@ -151,10 +122,12 @@ async def logout():
 頁面部分
 '''
 @app.route("/", methods=['GET'])
+@error_handle
 async def root():
   return redirect('/public/')
 
 @app.route("/public/<hash>", methods=['GET','POST'])
+@error_handle
 #@login_required
 async def public_info(hash=''):
   if request.method == 'POST':
@@ -165,6 +138,7 @@ async def public_info(hash=''):
     return await render_template('home.html')
 
 @app.route("/public/", methods=['GET','POST'])
+@error_handle
 #@login_required
 async def public_home():
   if request.method == 'POST':
@@ -175,20 +149,24 @@ async def public_home():
     return await render_template('home.html')
 
 @app.route("/public", methods=['GET'])
+@error_handle
 async def public_redirect():
   return redirect('/public/')
   
 @app.route("/media/<variable>", methods=['GET','POST'])
+@error_handle
 #@login_required
 async def media(variable):
   return await render_template('media_browser.html')
 
 @app.route("/path/<hash>", methods=['POST'])
+@error_handle
 #@login_required
 async def hash_path(hash=''):
   return file_sys.get_info(file_sys.hash2id(hash))
 
 @app.route("/path2hash",methods=['POST'])
+@error_handle
 async def path2hash():
   path = request.form['path'].strip('/')
   if path:
@@ -201,6 +179,7 @@ async def path2hash():
     return {'hash':folder['hash'],'is_field_root': path==''}
   
 @app.route("/field/<field>", methods=['POST'])
+@error_handle
 #@login_required
 async def hash_path_field(field=''):
   if field == 'public':
@@ -251,6 +230,7 @@ def secure(filename):
   return filename
 
 @app.route('/upload', methods=['POST'])
+@error_handle
 #@login_required
 async def upload_file():
   if 'root_list' in request.form:
@@ -266,25 +246,26 @@ async def upload_file():
         )
 
     root_list = loads(request.form['root_list'])
-    files = request.files
+    all_files = request.files
 
     print(new_dirs)
-    for i in root_list:
-      print(i)
-      file = files[i]
-      root = root_list[i].strip('/')
-      filename = secure(i)
-      cache_path = os.path.join(PATH, cache, filename)
-      file.save(cache_path)
+    for path,files in root_list.items():
+      for i in files:
+        print(path+i)
+        file = all_files[path+i]
+        root = path.strip('/')
+        filename = secure(i)
+        cache_path = os.path.join(PATH, cache, filename)
+        file.save(cache_path)
 
-      file_type = get_type(cache_path)
-      file_sys.add_file(
-        filename,
-        cache_path,
-        root,
-        type=file_type
-      )
-      os.remove(cache_path)
+        file_type = get_type(cache_path)
+        file_sys.add_file(
+          filename,
+          cache_path,
+          root,
+          type=file_type
+        )
+        os.remove(cache_path)
     return {'success':'success'}
   else:
     files = [i for i in request.files.values()]
@@ -311,18 +292,36 @@ async def upload_file():
     else:
       return {'ignore':'ignore'}
 
+@app.route('/set_property', methods=['POST'])
+@error_handle
+#@login_required
+async def set_property():
+  form = request.form
+  hash = form['hash']
+  id = file_sys.hash2id(hash)
+  file_sys.set_info(
+    id,
+    name=form['name'],
+    tag=form['tag'].split('/'),
+    description=form['des'],
+  )
+  return {"success":"success"}
+
 @app.route('/thumbnail/<id>', methods=['GET'])
+@error_handle
 #@login_required
 async def thumbnail(id):
   return send_file(file_sys.get_file((int(id))))
 
 @app.route('/download/<variable>', methods=['GET'])
+@error_handle
 #@login_required
 async def download(variable):
   path = file_sys.get_file(file_sys.hash2id(variable))
   return send_file(path, as_attachment=True)
 
 @app.route('/delete/<variable>', methods=['GET'])
+@error_handle
 #@login_required
 async def delete(variable):
   info = file_sys.get_info(file_sys.hash2id(variable))
@@ -343,6 +342,7 @@ def secure_folder(filename):
   return filename
 
 @app.route('/create_dir', methods=['POST'])
+@error_handle
 #@login_required
 async def create_dir():
   form = request.form

@@ -65,23 +65,8 @@
       <!--主介面區-->
       <div class="container-fluid position-relative flex-grow-1 w-100 h-100 m-0 p-0">
         <div id="main-body" class="position-absolute w-100 h-100 row m-0 p-0">
-          <!--左側選單-->
-          <div class='m-0 p-0 col-12 col-md-2 h-100 max-h-inherit border d-flex'>
-            <!--按紐:新增-->
-            <div class="dropdown">
-              <button class="m-0 btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                新增
-              </button>
-            
-              <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton1">
-                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadModal">上傳檔案</a></li>
-                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#createDirModal">新增資料夾</a></li>
-              </ul>
-            </div>
-          </div>
-          
           <!--中間檔案列表-->
-          <div class='d-flex flex-column m-0 p-0 col-md-7' ondrop="drop(event)" ondragover="dragover(event);" ondragstart="dragstart(event)" draggable="true">
+          <div class='d-flex flex-column m-0 p-0 col-md-8' ondrop="drop(event)" ondragover="dragover(event);" ondragstart="dragstart(event)">
             <!--檔案操作欄-->
             <div id="file_operate" class="w-100 m-0 p-0 navbar navbar-expand-lg border-bottom d-flex justify-content-between">
               <div class="align-items-center d-flex flex-row">
@@ -91,7 +76,8 @@
                 </div>
                 <!--區域切換按鈕(同時顯示當前目錄)-->
                 <div class="dropdown">
-                  <button class="m-0 btn btn-light" data-bs-toggle="dropdown">
+                  <!--button class="m-0 btn btn-light" data-bs-toggle="dropdown"-->
+                  <button class="m-0 btn btn-light">
                     {[ now_field ]}
                   </button>
                 
@@ -112,7 +98,10 @@
                   <i class="fas fa-ellipsis-v me-2" data-bs-toggle="dropdown" style="font-size: 22px !important;cursor:pointer"></i>
                 
                   <ul class="dropdown-menu dropdown-menu-left">
-                    <li><a class="dropdown-item" v-bind:href="'/media/'+now_hash">在媒體瀏覽器中開啟此資料夾</a>
+                    <li style="display:none"><a class="dropdown-item" v-bind:href="'/media/'+now_hash" v-bind:style="video_file_state">在媒體瀏覽器中開啟此資料夾</a><li>
+                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#uploadModal">上傳檔案</a></li>
+                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#createDirModal">新增資料夾</a></li>
+                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#setPropertyModal">更改屬性</a></li>
                   </ul>
                 </div>
               </div>
@@ -188,7 +177,7 @@
           </div>
 
           <!--右側資料顯示-->
-          <div class='m-0 p-0 col-12 col-md-3 max-h-inherit border'>
+          <div class='m-0 p-0 col-12 col-md-4 max-h-inherit border'>
             <div class="max-h-inherit m-0 p-0 h-100 m-0 p-0">
               <div id="info_icon" class="max-h-inherit m-0 p-0 h-33">
                 <!--預覽圖片-->
@@ -303,7 +292,7 @@
 
     <!-- Modal -->
     <!-- 上傳檔案 -->
-    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="false">
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="false">
       <div class="modal-dialog p-0">
         <!--上傳狀況-->
         <div class="position-absolute modal-content max-w-inherit w-100">
@@ -379,6 +368,38 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
             <button type="button" class="btn btn-primary" onclick="create_dir()">建立</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 更改屬性 -->
+    <div class="modal fade" id="setPropertyModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">更改屬性</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id='set_property'>
+              <div class='form-group mb-3'>
+                <label for="tag">名稱</label>
+                <input type="text" name="name" class="form-control" autocomplete="off">
+              </div>
+              <div class='form-group mb-3'>
+                <label for="tag">標籤(不同標籤用/隔開)</label>
+                <input type="text" name="tag" class="form-control" autocomplete="off">
+              </div>
+              <div class='form-group'>
+                <label for="des">描述</label>
+                <textarea type="text" name="des" class="form-control" autocomplete="off"></textarea> 
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" onclick="set_property()">修改</button>
           </div>
         </div>
       </div>
